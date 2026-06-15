@@ -1,0 +1,7327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas CD · Resoluciones Columna-Diamante</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+<style>
+:root {
+  --bg:        #0e0e10;
+  --panel:     #18181b;
+  --panel-2:   #1f1f23;
+  --border:    #2a2a2e;
+  --text:      #d9d9dc;
+  --text-muted:#8a8a90;
+  --accent:    #c1a878;
+  --CDuno:     #6e6cc9;   /* indigo */
+  --CDdos:     #c1440e;   /* brick red */
+  --CDtres:    #4ea27a;   /* moss green */
+  --CDcuatro:  #cfa033;   /* ochre */
+  --CDgris:    #5a5a5e;   /* graphite */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'EB Garamond', serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+header {
+  padding: 0.9rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+}
+header h1 {
+  font-weight: 500;
+  font-size: 1.4rem;
+  letter-spacing: 0.02em;
+}
+header h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+header .subtitle {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 460px;
+  height: calc(100% - 56px);
+}
+
+/* ─── MAPA ─── */
+#map-wrap {
+  position: relative;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+.toolbar {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-size: 0.78rem;
+  flex-wrap: wrap;
+  background: var(--panel);
+}
+.toolbar label {
+  display: flex; align-items: center; gap: 0.35rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.toolbar select, .toolbar input {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+}
+.toolbar .stat {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+#cy { flex: 1; background: var(--bg); }
+
+/* ─── CARTA ─── */
+#card {
+  background: var(--panel);
+  overflow-y: auto;
+  padding: 1.4rem 1.5rem;
+}
+#card .empty {
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 2rem;
+}
+.card-title {
+  font-size: 1.45rem;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.01em;
+}
+.card-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 1.2rem;
+}
+.card-section {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+.card-section h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+  font-weight: 500;
+}
+.kv {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  row-gap: 0.35rem;
+  font-size: 0.94rem;
+}
+.kv .k {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding-top: 0.1rem;
+}
+.kv .v {
+  font-family: 'EB Garamond', serif;
+  font-size: 1rem;
+}
+.kv .v code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.86rem;
+  color: var(--accent);
+}
+.betti-row {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--panel-2);
+  padding: 0.5rem 0.7rem;
+  border-radius: 3px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.diagram-wrap {
+  background: var(--panel-2);
+  border-radius: 3px;
+  padding: 0.7rem;
+  overflow-x: auto;
+}
+.neighbors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.neighbor {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--panel-2);
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: border-color 0.12s ease;
+}
+.neighbor:hover { border-color: var(--accent); }
+.neighbor .nid {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--accent);
+}
+.neighbor .nkind {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* matrices */
+.matrices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.matrix-block {
+  background: var(--panel-2);
+  padding: 0.55rem 0.7rem;
+  border-radius: 3px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.84rem;
+}
+.matrix-block .mlabel {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  margin-bottom: 0.3rem;
+}
+.matrix-block table {
+  border-collapse: collapse;
+}
+.matrix-block td {
+  padding: 0.1rem 0.55rem;
+  text-align: center;
+  color: var(--text);
+}
+
+/* node colors in cytoscape, by family */
+.legend {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text-muted);
+}
+.legend-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Atlas <em>CD</em></h1>
+  <span class="subtitle">cartas de resoluciones Columna–Diamante de <span style="font-style:italic">M&nbsp;=&nbsp;R/(x<sub>1</sub>)</span></span>
+</header>
+
+<div class="layout">
+  <div id="map-wrap">
+    <div class="toolbar">
+      <label>n<select id="filter-n">
+        <option value="all">todos</option>
+        <option value="1">1</option><option value="2">2</option>
+        <option value="3">3</option><option value="4">4</option>
+        <option value="5">5</option>
+      </select></label>
+      <label>|I|<select id="filter-gens">
+        <option value="all">todos</option>
+        <option value="0">0</option><option value="1">1</option>
+        <option value="2">2</option><option value="3">3</option>
+      </select></label>
+      <label>familia<select id="filter-family">
+        <option value="all">todas</option>
+        <option value="free">free</option>
+        <option value="squares-only">squares-only</option>
+        <option value="fan-at-x1">fan-at-x1</option>
+        <option value="fan">fan</option>
+        <option value="path-like">path-like</option>
+        <option value="mixed">mixed</option>
+      </select></label>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--CDuno)"></span>fan-at-x1</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--CDdos)"></span>fan</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--CDtres)"></span>path-like</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--CDcuatro)"></span>squares-only</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#888"></span>mixed</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--CDgris)"></span>free</span>
+      </div>
+      <div class="stat" id="stat"></div>
+    </div>
+    <div id="cy"></div>
+  </div>
+
+  <div id="card">
+    <div class="empty">Selecciona una carta del mapa para ver su resolución.</div>
+  </div>
+</div>
+
+<script>
+/*
+ * cd-core.js — Column-Diamond core algorithm (sign-corrected).
+ *
+ * No DOM, no SVG, no rendering. Pure data manipulation.
+ * Works both in Node (CommonJS) and the browser (window.CDCore).
+ *
+ * SIGN-ASSIGNMENT FIX (two phases):
+ *
+ *   Phase 1 (structure, over F_2):
+ *     Build, per new node, the set of edges (toP, idx) without signs.
+ *     Contributions (one per column, one per diamond) are grouped via
+ *     union-find when they share at least one edge.
+ *
+ *   Phase 2 (signs, BFS on the per-node coupling forest):
+ *     Each diamond imposes a sign constraint between its two edges:
+ *         s(eA) * sgnA + s(eB) * sgnB = 0
+ *       i.e. s(eB) = -sgnA*sgnB * s(eA).
+ *     Per group: for each connected component of the coupling graph,
+ *     anchor one edge at +1 and propagate by BFS. If a cycle is found,
+ *     verify consistency (it always closes for well-formed CD inputs;
+ *     the coupling graph is a forest in every example tested).
+ */
+
+'use strict';
+
+function buildCD({ n, relations, initVars, levels }) {
+  // ----- helpers -----
+  const inI = new Set(relations.map(([a, b]) => `${Math.min(a, b)},${Math.max(a, b)}`));
+  const isInI = (a, b) => inI.has(`${Math.min(a, b)},${Math.max(a, b)}`);
+
+  // ----- state -----
+  const nodes = [];       // nodes[g] = [{id, g, p}, ...]
+  const arrows = [];      // {fromG, fromP, toG, toP, idx, sign}
+  let nodeId = 0;
+  const mkNode = (g, p) => ({ id: nodeId++, g, p });
+
+  // Degree 0: single node.
+  nodes[0] = [mkNode(0, 0)];
+  // Degree 1: one node per initial variable, all pointing to node 0.
+  nodes[1] = initVars.map((_, p) => mkNode(1, p));
+  for (let p = 0; p < initVars.length; p++) {
+    arrows.push({ fromG: 1, fromP: p, toG: 0, toP: 0, idx: initVars[p], sign: 1 });
+  }
+
+  for (let g = 1; g < levels - 1; g++) extendDiagram(g);
+
+  function extendDiagram(g) {
+    const currentArrows = arrows.filter(a => a.fromG === g && a.toG === g - 1);
+
+    // Each contribution: { edges: [{toP,idx}], couples: [{eA, eB, sgnA, sgnB}] }
+    const contribs = new Map();
+
+    // -------- COLUMNS --------
+    // For every arrow (fromP=p)--xi-->(toP=q) and every j with xi*xj ∈ I,
+    // a column adds a fresh node with ONE edge (new --xj--> p).
+    for (const arr of currentArrows) {
+      const i = arr.idx, p = arr.fromP;
+      for (let j = 1; j <= n; j++) {
+        if (isInI(i, j)) {
+          const key = `col,${p},${j}`;
+          if (!contribs.has(key)) {
+            contribs.set(key, { edges: [{ toP: p, idx: j }], couples: [] });
+          }
+        }
+      }
+    }
+
+    // -------- DIAMONDS --------
+    // For every w in degree g-1 with multiple incoming arrows, form
+    // diamond completions for each pair (arrA, arrB) with sigA,sigB indices
+    // satisfying x_{idxA} * x_{idxB} ∉ I, idxA != idxB, pA != pB.
+    for (const w of nodes[g - 1]) {
+      const arrowsToW = currentArrows.filter(a => a.toP === w.p);
+      const byOrigin = new Map();
+      for (const arr of arrowsToW) {
+        if (!byOrigin.has(arr.fromP)) byOrigin.set(arr.fromP, arr);
+      }
+      const repArr = [...byOrigin.values()].sort((a, b) => a.idx - b.idx);
+
+      for (let a = 0; a < repArr.length; a++) {
+        for (let b = a + 1; b < repArr.length; b++) {
+          const arrA = repArr[a], arrB = repArr[b];
+          const idxA = arrA.idx, idxB = arrB.idx;
+          const sgnA = arrA.sign, sgnB = arrB.sign;
+          const pA = arrA.fromP, pB = arrB.fromP;
+          if (pA === pB || idxA === idxB) continue;
+          if (isInI(idxA, idxB)) continue;
+
+          const key = `diam,${w.p},${pA},${pB}`;
+          if (!contribs.has(key)) {
+            const eA = { toP: pA, idx: idxB };  // upper-left edge of the diamond
+            const eB = { toP: pB, idx: idxA };  // upper-right edge of the diamond
+            contribs.set(key, {
+              edges: [eA, eB],
+              // s(eA)*sgnA + s(eB)*sgnB = 0  =>  s(eB) = -sgnA*sgnB * s(eA)
+              couples: [{ eA, eB, sgnA, sgnB }]
+            });
+          }
+        }
+      }
+    }
+
+    // -------- PHASE 1: union-find over the contribution incidence (F_2 structure)
+    const contribList = [...contribs.values()];
+    const parent = contribList.map((_, i) => i);
+    const find = x => parent[x] === x ? x : (parent[x] = find(parent[x]));
+    const union = (x, y) => { parent[find(x)] = find(y); };
+
+    const edgeOwner = new Map(); // "toP,idx" -> first contrib index seen
+    for (let i = 0; i < contribList.length; i++) {
+      for (const e of contribList[i].edges) {
+        const k = `${e.toP},${e.idx}`;
+        if (edgeOwner.has(k)) union(i, edgeOwner.get(k));
+        else edgeOwner.set(k, i);
+      }
+    }
+
+    // Aggregate by group: unique edge set + all couplings of the group.
+    const groups = new Map(); // root -> { edges: Map(key->edge), couples: [...] }
+    for (let i = 0; i < contribList.length; i++) {
+      const root = find(i);
+      if (!groups.has(root)) groups.set(root, { edges: new Map(), couples: [] });
+      const gr = groups.get(root);
+      for (const e of contribList[i].edges) {
+        const k = `${e.toP},${e.idx}`;
+        if (!gr.edges.has(k)) gr.edges.set(k, e);
+      }
+      for (const c of contribList[i].couples) gr.couples.push(c);
+    }
+
+    // -------- PHASE 2: per-group BFS sign propagation
+    const newLevel = [];
+    nodes[g + 1] = newLevel;
+    let pos = 0;
+
+    for (const [, grp] of groups) {
+      const edgeKeys = [...grp.edges.keys()];
+      const signs = new Map();
+
+      // adjacency: edgeKey -> [{to: edgeKey, factor: ±1}]
+      const adj = new Map();
+      for (const k of edgeKeys) adj.set(k, []);
+      for (const c of grp.couples) {
+        const kA = `${c.eA.toP},${c.eA.idx}`;
+        const kB = `${c.eB.toP},${c.eB.idx}`;
+        const f = -c.sgnA * c.sgnB;     // s(kB) = f * s(kA)
+        adj.get(kA).push({ to: kB, factor: f });
+        adj.get(kB).push({ to: kA, factor: f });
+      }
+
+      for (const k0 of edgeKeys) {
+        if (signs.has(k0)) continue;
+        signs.set(k0, 1);
+        const queue = [k0];
+        while (queue.length) {
+          const u = queue.shift();
+          for (const { to, factor } of adj.get(u)) {
+            const want = factor * signs.get(u);
+            if (signs.has(to)) {
+              if (signs.get(to) !== want) {
+                throw new Error(
+                  `CD sign inconsistency at level g=${g}, edge ${to} ` +
+                  `(want ${want}, have ${signs.get(to)})`
+                );
+              }
+            } else {
+              signs.set(to, want);
+              queue.push(to);
+            }
+          }
+        }
+      }
+
+      // Materialize the new node and its arrows.
+      const newNode = mkNode(g + 1, pos);
+      newLevel.push(newNode);
+      for (const k of edgeKeys) {
+        const e = grp.edges.get(k);
+        arrows.push({
+          fromG: g + 1, fromP: pos,
+          toG: g,       toP: e.toP,
+          idx: e.idx,
+          sign: signs.get(k)
+        });
+      }
+      pos++;
+    }
+
+    // If there were no contributions, F_{g+1} = 0 and the resolution
+    // terminates here. No ghost node is created.
+  }
+
+  return { nodes, arrows, n, initVars, levels, relations };
+}
+
+// ---------------------------------------------------------------
+// Symbolic matrices d_g : F_g -> F_{g-1}.
+// M[i][j] is a list of monomial terms {idx, sign} that, summed, give
+// the (i,j) entry. Two terms with the same idx are summed combinatorially.
+function buildMatrices(cd) {
+  const { nodes, arrows, levels } = cd;
+  const mats = [];
+  for (let g = 1; g < levels; g++) {
+    if (!nodes[g] || !nodes[g - 1]) { mats.push(null); continue; }
+    const rows = nodes[g - 1].length;
+    const cols = nodes[g].length;
+    const M = Array.from({ length: rows }, () =>
+      Array.from({ length: cols }, () => []));
+    for (const a of arrows) {
+      if (a.fromG === g && a.toG === g - 1) {
+        M[a.toP][a.fromP].push({ idx: a.idx, sign: a.sign });
+      }
+    }
+    // Combine like terms by idx.
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
+        const sums = new Map();
+        for (const t of M[i][j]) sums.set(t.idx, (sums.get(t.idx) || 0) + t.sign);
+        M[i][j] = [...sums.entries()]
+          .filter(([, s]) => s !== 0)
+          .map(([idx, sign]) => ({ idx, sign }));
+      }
+    }
+    mats.push(M);
+  }
+  return mats;
+}
+
+function bettiNumbers(cd) {
+  return cd.nodes.map(l => l ? l.length : 0);
+}
+
+// ---------------------------------------------------------------
+// Verifies d_g ∘ d_{g+1} = 0 in R = k[x]/I, for every g.
+// Two composable arrows ptop --x_i--> q --x_j--> pbot contribute
+// sign(top)*sign(bot) * x_i*x_j. If x_i*x_j ∈ I, the term vanishes
+// in R; otherwise it accumulates into the {i,j}-monomial coefficient.
+// Cancellation requires the total coefficient to be zero for every
+// surviving monomial and every (ptop, pbot) pair.
+function verifyDdEqualsZero(cd) {
+  const { arrows, nodes, levels, relations } = cd;
+  const inI = new Set(relations.map(([a, b]) => `${Math.min(a, b)},${Math.max(a, b)}`));
+  const isInI = (a, b) => inI.has(`${Math.min(a, b)},${Math.max(a, b)}`);
+
+  const violations = [];
+  for (let g = 1; g < levels - 1; g++) {
+    const top = nodes[g + 1] || [];
+    const bot = nodes[g - 1] || [];
+    const upByOrigin = new Map();
+    for (const a of arrows) if (a.fromG === g + 1) {
+      if (!upByOrigin.has(a.fromP)) upByOrigin.set(a.fromP, []);
+      upByOrigin.get(a.fromP).push(a);
+    }
+    const downByOriginTarget = new Map();
+    for (const a of arrows) if (a.fromG === g && a.toG === g - 1) {
+      const k = `${a.fromP}->${a.toP}`;
+      if (!downByOriginTarget.has(k)) downByOriginTarget.set(k, []);
+      downByOriginTarget.get(k).push(a);
+    }
+
+    for (const ptop of top) {
+      const ups = upByOrigin.get(ptop.p) || [];
+      for (const pbot of bot) {
+        const accum = new Map();
+        for (const aup of ups) {
+          const downs = downByOriginTarget.get(`${aup.toP}->${pbot.p}`) || [];
+          for (const adn of downs) {
+            const i = aup.idx, j = adn.idx;
+            if (isInI(i, j)) continue;
+            const key = i <= j ? `${i},${j}` : `${j},${i}`;
+            accum.set(key, (accum.get(key) || 0) + aup.sign * adn.sign);
+          }
+        }
+        for (const [k, v] of accum) {
+          if (v !== 0) violations.push({ g, top: ptop.p, bot: pbot.p, monomial: k, coeff: v });
+        }
+      }
+    }
+  }
+  return violations;
+}
+
+// ---------------------------------------------------------------
+const API = { buildCD, buildMatrices, bettiNumbers, verifyDdEqualsZero };
+if (typeof module !== 'undefined' && module.exports) module.exports = API;
+if (typeof window !== 'undefined') window.CDCore = API;
+
+</script>
+<script>
+// ===== Atlas SPA =====
+
+const FAMILY_COLOR = {
+  'fan-at-x1':    '#6e6cc9',
+  'fan':          '#c1440e',
+  'path-like':    '#4ea27a',
+  'squares-only': '#cfa033',
+  'mixed':        '#888',
+  'free':         '#5a5a5e'
+};
+
+let atlas = null;
+let cy = null;
+let selectedId = null;
+
+// ----- Load data -----
+const __ATLAS = {
+  "meta": {
+    "generated": "2026-06-15T22:59:15.493Z",
+    "n_max": 5,
+    "gens_max": 3,
+    "levels": 9,
+    "n_cards": 139,
+    "n_edges": 364
+  },
+  "cards": [
+    {
+      "id": "n1_empty",
+      "n": 1,
+      "I": [],
+      "I_str": "∅",
+      "gens": 0,
+      "squarefree": true,
+      "family": "free",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n1_11",
+      "n": 1,
+      "I": [
+        [
+          1,
+          1
+        ]
+      ],
+      "I_str": "x1x1",
+      "gens": 1,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n2_empty",
+      "n": 2,
+      "I": [],
+      "I_str": "∅",
+      "gens": 0,
+      "squarefree": true,
+      "family": "free",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n2_22",
+      "n": 2,
+      "I": [
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x2x2",
+      "gens": 1,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n2_12",
+      "n": 2,
+      "I": [
+        [
+          1,
+          2
+        ]
+      ],
+      "I_str": "x1x2",
+      "gens": 1,
+      "squarefree": true,
+      "family": "fan-at-x1",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n2_11",
+      "n": 2,
+      "I": [
+        [
+          1,
+          1
+        ]
+      ],
+      "I_str": "x1x1",
+      "gens": 1,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n2_12-22",
+      "n": 2,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x2,x2x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n2_11-22",
+      "n": 2,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x2x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n2_11-12",
+      "n": 2,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x1x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n2_11-12-22",
+      "n": 2,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x2x2",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_empty",
+      "n": 3,
+      "I": [],
+      "I_str": "∅",
+      "gens": 0,
+      "squarefree": true,
+      "family": "free",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_22",
+      "n": 3,
+      "I": [
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x2x2",
+      "gens": 1,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_23",
+      "n": 3,
+      "I": [
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x2x3",
+      "gens": 1,
+      "squarefree": true,
+      "family": "fan",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_12",
+      "n": 3,
+      "I": [
+        [
+          1,
+          2
+        ]
+      ],
+      "I_str": "x1x2",
+      "gens": 1,
+      "squarefree": true,
+      "family": "fan-at-x1",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_11",
+      "n": 3,
+      "I": [
+        [
+          1,
+          1
+        ]
+      ],
+      "I_str": "x1x1",
+      "gens": 1,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_22-23",
+      "n": 3,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x2x2,x2x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_22-33",
+      "n": 3,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x2x2,x3x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_12-22",
+      "n": 3,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x2,x2x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_12-23",
+      "n": 3,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x3",
+      "gens": 2,
+      "squarefree": true,
+      "family": "fan",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_12-33",
+      "n": 3,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x3x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_12-13",
+      "n": 3,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x1x3",
+      "gens": 2,
+      "squarefree": true,
+      "family": "fan-at-x1",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_11-22",
+      "n": 3,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x2x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_11-23",
+      "n": 3,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x2x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_11-12",
+      "n": 3,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x1x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_22-23-33",
+      "n": 3,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x2x2,x2x3,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_12-22-23",
+      "n": 3,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x2,x2x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        3,
+        6,
+        13,
+        28,
+        60,
+        129
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_12-22-33",
+      "n": 3,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x2,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_12-23-33",
+      "n": 3,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x3,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_12-13-22",
+      "n": 3,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x2x2",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_12-13-23",
+      "n": 3,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x2x3",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_11-22-23",
+      "n": 3,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x2x2,x2x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_11-22-33",
+      "n": 3,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x2x2,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_11-12-22",
+      "n": 3,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x2x2",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_11-12-23",
+      "n": 3,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x2x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_11-12-33",
+      "n": 3,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n3_11-12-13",
+      "n": 3,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x1x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        3,
+        6,
+        13,
+        28,
+        60,
+        129,
+        277
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_empty",
+      "n": 4,
+      "I": [],
+      "I_str": "∅",
+      "gens": 0,
+      "squarefree": true,
+      "family": "free",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_22",
+      "n": 4,
+      "I": [
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x2x2",
+      "gens": 1,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_23",
+      "n": 4,
+      "I": [
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x2x3",
+      "gens": 1,
+      "squarefree": true,
+      "family": "fan",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ]
+      ],
+      "I_str": "x1x2",
+      "gens": 1,
+      "squarefree": true,
+      "family": "fan-at-x1",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ]
+      ],
+      "I_str": "x1x1",
+      "gens": 1,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_22-23",
+      "n": 4,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x2x2,x2x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_22-33",
+      "n": 4,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x2x2,x3x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_23-24",
+      "n": 4,
+      "I": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "I_str": "x2x3,x2x4",
+      "gens": 2,
+      "squarefree": true,
+      "family": "fan",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_22-34",
+      "n": 4,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x2x2,x3x4",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-22",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x2,x2x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-23",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x3",
+      "gens": 2,
+      "squarefree": true,
+      "family": "fan",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-33",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x3x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-34",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x3x4",
+      "gens": 2,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-13",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x1x3",
+      "gens": 2,
+      "squarefree": true,
+      "family": "fan-at-x1",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-22",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x2x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-23",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x2x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-12",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x1x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_22-23-33",
+      "n": 4,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x2x2,x2x3,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_22-23-24",
+      "n": 4,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "I_str": "x2x2,x2x3,x2x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_22-23-44",
+      "n": 4,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "I_str": "x2x2,x2x3,x4x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_22-23-34",
+      "n": 4,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x2x2,x2x3,x3x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_23-24-34",
+      "n": 4,
+      "I": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x2x3,x2x4,x3x4",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_22-33-44",
+      "n": 4,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "I_str": "x2x2,x3x3,x4x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-22-23",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x2,x2x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        3,
+        6,
+        13,
+        28,
+        60,
+        129
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-22-33",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x2,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-23-33",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x3,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-23-24",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x2x3,x2x4",
+      "gens": 3,
+      "squarefree": true,
+      "family": "fan",
+      "betti": [
+        1,
+        1,
+        1,
+        3,
+        6,
+        13,
+        28,
+        60,
+        129
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-23-44",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x2x3,x4x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-22-34",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x2x2,x3x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-23-34",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x2x3,x3x4",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-33-34",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x3x3,x3x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-33-44",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x3x3,x4x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-13-22",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x2x2",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-13-23",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x2x3",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-13-24",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x2x4",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-13-44",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x4x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_12-13-14",
+      "n": 4,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x1x4",
+      "gens": 3,
+      "squarefree": true,
+      "family": "fan-at-x1",
+      "betti": [
+        1,
+        1,
+        3,
+        6,
+        13,
+        28,
+        60,
+        129,
+        277
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-22-23",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x2x2,x2x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-22-33",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x2x2,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-23-24",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "I_str": "x1x1,x2x3,x2x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-22-34",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x1,x2x2,x3x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-12-22",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x2x2",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-12-23",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x2x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-12-33",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-12-34",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x3x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n4_11-12-13",
+      "n": 4,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x1x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        3,
+        6,
+        13,
+        28,
+        60,
+        129,
+        277
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_empty",
+      "n": 5,
+      "I": [],
+      "I_str": "∅",
+      "gens": 0,
+      "squarefree": true,
+      "family": "free",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x2x2",
+      "gens": 1,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_23",
+      "n": 5,
+      "I": [
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x2x3",
+      "gens": 1,
+      "squarefree": true,
+      "family": "fan",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ]
+      ],
+      "I_str": "x1x2",
+      "gens": 1,
+      "squarefree": true,
+      "family": "fan-at-x1",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ]
+      ],
+      "I_str": "x1x1",
+      "gens": 1,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22-23",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x2x2,x2x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22-33",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x2x2,x3x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_23-24",
+      "n": 5,
+      "I": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "I_str": "x2x3,x2x4",
+      "gens": 2,
+      "squarefree": true,
+      "family": "fan",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22-34",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x2x2,x3x4",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_23-45",
+      "n": 5,
+      "I": [
+        [
+          2,
+          3
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "I_str": "x2x3,x4x5",
+      "gens": 2,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-22",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x2,x2x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-23",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x3",
+      "gens": 2,
+      "squarefree": true,
+      "family": "fan",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-33",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x3x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-34",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x3x4",
+      "gens": 2,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-13",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x1x3",
+      "gens": 2,
+      "squarefree": true,
+      "family": "fan-at-x1",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-22",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x2x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-23",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x2x3",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-12",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x1x2",
+      "gens": 2,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22-23-33",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x2x2,x2x3,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22-23-24",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "I_str": "x2x2,x2x3,x2x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22-23-44",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "I_str": "x2x2,x2x3,x4x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22-23-34",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x2x2,x2x3,x3x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_23-24-34",
+      "n": 5,
+      "I": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x2x3,x2x4,x3x4",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22-33-44",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "I_str": "x2x2,x3x3,x4x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_23-24-25",
+      "n": 5,
+      "I": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          5
+        ]
+      ],
+      "I_str": "x2x3,x2x4,x2x5",
+      "gens": 3,
+      "squarefree": true,
+      "family": "fan",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22-34-35",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "I_str": "x2x2,x3x4,x3x5",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22-23-45",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "I_str": "x2x2,x2x3,x4x5",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_23-24-35",
+      "n": 5,
+      "I": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "I_str": "x2x3,x2x4,x3x5",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_22-33-45",
+      "n": 5,
+      "I": [
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "I_str": "x2x2,x3x3,x4x5",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-22-23",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x2,x2x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        3,
+        6,
+        13,
+        28,
+        60,
+        129
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-22-33",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x2,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-23-33",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x2x3,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-23-24",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x2x3,x2x4",
+      "gens": 3,
+      "squarefree": true,
+      "family": "fan",
+      "betti": [
+        1,
+        1,
+        1,
+        3,
+        6,
+        13,
+        28,
+        60,
+        129
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-23-44",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x2x3,x4x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-22-34",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x2x2,x3x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-23-34",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x2x3,x3x4",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-33-34",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x3x3,x3x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-33-44",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x3x3,x4x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-23-45",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "I_str": "x1x2,x2x3,x4x5",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-34-35",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "I_str": "x1x2,x3x4,x3x5",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-33-45",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "I_str": "x1x2,x3x3,x4x5",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-13-22",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x2x2",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-13-23",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x2x3",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-13-24",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x2x4",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-13-44",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x4x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-13-45",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x4x5",
+      "gens": 3,
+      "squarefree": true,
+      "family": "path-like",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_12-13-14",
+      "n": 5,
+      "I": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "I_str": "x1x2,x1x3,x1x4",
+      "gens": 3,
+      "squarefree": true,
+      "family": "fan-at-x1",
+      "betti": [
+        1,
+        1,
+        3,
+        6,
+        13,
+        28,
+        60,
+        129,
+        277
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-22-23",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x2x2,x2x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-22-33",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x2x2,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "squares-only",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-23-24",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "I_str": "x1x1,x2x3,x2x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-22-34",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x1,x2x2,x3x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-23-45",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "I_str": "x1x1,x2x3,x4x5",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-12-22",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x2x2",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-12-23",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x2x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-12-33",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x3x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-12-34",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x3x4",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13,
+        21,
+        34
+      ],
+      "dd_zero": true,
+      "error": null
+    },
+    {
+      "id": "n5_11-12-13",
+      "n": 5,
+      "I": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "I_str": "x1x1,x1x2,x1x3",
+      "gens": 3,
+      "squarefree": false,
+      "family": "mixed",
+      "betti": [
+        1,
+        1,
+        3,
+        6,
+        13,
+        28,
+        60,
+        129,
+        277
+      ],
+      "dd_zero": true,
+      "error": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1_empty",
+      "target": "n1_11",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_empty",
+      "target": "n2_22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_empty",
+      "target": "n2_12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_empty",
+      "target": "n2_11",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_22",
+      "target": "n2_12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_12",
+      "target": "n2_12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_22",
+      "target": "n2_11-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_11",
+      "target": "n2_11-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_12",
+      "target": "n2_11-12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_11",
+      "target": "n2_11-12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_12-22",
+      "target": "n2_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_11-22",
+      "target": "n2_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n2_11-12",
+      "target": "n2_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_empty",
+      "target": "n3_22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_empty",
+      "target": "n3_23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_empty",
+      "target": "n3_12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_empty",
+      "target": "n3_11",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_23",
+      "target": "n3_22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22",
+      "target": "n3_22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22",
+      "target": "n3_22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22",
+      "target": "n3_12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12",
+      "target": "n3_12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_23",
+      "target": "n3_12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12",
+      "target": "n3_12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22",
+      "target": "n3_12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12",
+      "target": "n3_12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12",
+      "target": "n3_12-13",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22",
+      "target": "n3_11-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11",
+      "target": "n3_11-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_23",
+      "target": "n3_11-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11",
+      "target": "n3_11-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12",
+      "target": "n3_11-12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11",
+      "target": "n3_11-12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22-23",
+      "target": "n3_22-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22-33",
+      "target": "n3_22-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22-23",
+      "target": "n3_12-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-23",
+      "target": "n3_12-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-22",
+      "target": "n3_12-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22-33",
+      "target": "n3_12-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-33",
+      "target": "n3_12-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-22",
+      "target": "n3_12-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22-23",
+      "target": "n3_12-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-33",
+      "target": "n3_12-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-23",
+      "target": "n3_12-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-33",
+      "target": "n3_12-13-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-22",
+      "target": "n3_12-13-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-13",
+      "target": "n3_12-13-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-23",
+      "target": "n3_12-13-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-13",
+      "target": "n3_12-13-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22-23",
+      "target": "n3_11-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11-23",
+      "target": "n3_11-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11-22",
+      "target": "n3_11-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_22-33",
+      "target": "n3_11-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11-22",
+      "target": "n3_11-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-22",
+      "target": "n3_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11-22",
+      "target": "n3_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11-12",
+      "target": "n3_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-23",
+      "target": "n3_11-12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11-23",
+      "target": "n3_11-12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11-12",
+      "target": "n3_11-12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-33",
+      "target": "n3_11-12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11-22",
+      "target": "n3_11-12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11-12",
+      "target": "n3_11-12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_12-13",
+      "target": "n3_11-12-13",
+      "kind": "subideal"
+    },
+    {
+      "source": "n3_11-12",
+      "target": "n3_11-12-13",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_empty",
+      "target": "n4_22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_empty",
+      "target": "n4_23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_empty",
+      "target": "n4_12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_empty",
+      "target": "n4_11",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23",
+      "target": "n4_22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22",
+      "target": "n4_22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22",
+      "target": "n4_22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23",
+      "target": "n4_23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23",
+      "target": "n4_22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22",
+      "target": "n4_22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22",
+      "target": "n4_12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12",
+      "target": "n4_12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23",
+      "target": "n4_12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12",
+      "target": "n4_12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22",
+      "target": "n4_12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12",
+      "target": "n4_12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23",
+      "target": "n4_12-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12",
+      "target": "n4_12-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12",
+      "target": "n4_12-13",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22",
+      "target": "n4_11-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11",
+      "target": "n4_11-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23",
+      "target": "n4_11-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11",
+      "target": "n4_11-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12",
+      "target": "n4_11-12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11",
+      "target": "n4_11-12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-23",
+      "target": "n4_22-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-33",
+      "target": "n4_22-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23-24",
+      "target": "n4_22-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-23",
+      "target": "n4_22-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-34",
+      "target": "n4_22-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-33",
+      "target": "n4_22-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-23",
+      "target": "n4_22-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23-24",
+      "target": "n4_22-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-34",
+      "target": "n4_22-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-23",
+      "target": "n4_22-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23-24",
+      "target": "n4_23-24-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-33",
+      "target": "n4_22-33-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-23",
+      "target": "n4_12-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-23",
+      "target": "n4_12-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-22",
+      "target": "n4_12-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-33",
+      "target": "n4_12-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-33",
+      "target": "n4_12-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-22",
+      "target": "n4_12-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-23",
+      "target": "n4_12-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-33",
+      "target": "n4_12-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-23",
+      "target": "n4_12-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23-24",
+      "target": "n4_12-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-23",
+      "target": "n4_12-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-34",
+      "target": "n4_12-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-33",
+      "target": "n4_12-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-23",
+      "target": "n4_12-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-34",
+      "target": "n4_12-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-34",
+      "target": "n4_12-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-22",
+      "target": "n4_12-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23-24",
+      "target": "n4_12-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-34",
+      "target": "n4_12-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-23",
+      "target": "n4_12-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-23",
+      "target": "n4_12-33-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-34",
+      "target": "n4_12-33-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-33",
+      "target": "n4_12-33-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-33",
+      "target": "n4_12-33-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-33",
+      "target": "n4_12-33-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-33",
+      "target": "n4_12-13-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-22",
+      "target": "n4_12-13-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-13",
+      "target": "n4_12-13-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-23",
+      "target": "n4_12-13-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-13",
+      "target": "n4_12-13-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-34",
+      "target": "n4_12-13-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-23",
+      "target": "n4_12-13-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-13",
+      "target": "n4_12-13-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-33",
+      "target": "n4_12-13-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-13",
+      "target": "n4_12-13-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-13",
+      "target": "n4_12-13-14",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-23",
+      "target": "n4_11-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-23",
+      "target": "n4_11-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-22",
+      "target": "n4_11-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-33",
+      "target": "n4_11-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-22",
+      "target": "n4_11-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_23-24",
+      "target": "n4_11-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-23",
+      "target": "n4_11-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_22-34",
+      "target": "n4_11-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-23",
+      "target": "n4_11-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-22",
+      "target": "n4_11-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-22",
+      "target": "n4_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-22",
+      "target": "n4_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-12",
+      "target": "n4_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-23",
+      "target": "n4_11-12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-23",
+      "target": "n4_11-12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-12",
+      "target": "n4_11-12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-33",
+      "target": "n4_11-12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-22",
+      "target": "n4_11-12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-12",
+      "target": "n4_11-12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-34",
+      "target": "n4_11-12-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-23",
+      "target": "n4_11-12-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-12",
+      "target": "n4_11-12-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_12-13",
+      "target": "n4_11-12-13",
+      "kind": "subideal"
+    },
+    {
+      "source": "n4_11-12",
+      "target": "n4_11-12-13",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_empty",
+      "target": "n5_22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_empty",
+      "target": "n5_23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_empty",
+      "target": "n5_12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_empty",
+      "target": "n5_11",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23",
+      "target": "n5_22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22",
+      "target": "n5_22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22",
+      "target": "n5_22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23",
+      "target": "n5_23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23",
+      "target": "n5_22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22",
+      "target": "n5_22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23",
+      "target": "n5_23-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22",
+      "target": "n5_12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12",
+      "target": "n5_12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23",
+      "target": "n5_12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12",
+      "target": "n5_12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22",
+      "target": "n5_12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12",
+      "target": "n5_12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23",
+      "target": "n5_12-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12",
+      "target": "n5_12-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12",
+      "target": "n5_12-13",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22",
+      "target": "n5_11-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11",
+      "target": "n5_11-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23",
+      "target": "n5_11-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11",
+      "target": "n5_11-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12",
+      "target": "n5_11-12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11",
+      "target": "n5_11-12",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-23",
+      "target": "n5_22-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-33",
+      "target": "n5_22-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-24",
+      "target": "n5_22-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-23",
+      "target": "n5_22-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-34",
+      "target": "n5_22-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-33",
+      "target": "n5_22-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-23",
+      "target": "n5_22-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-24",
+      "target": "n5_22-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-34",
+      "target": "n5_22-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-23",
+      "target": "n5_22-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-24",
+      "target": "n5_23-24-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-33",
+      "target": "n5_22-33-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-24",
+      "target": "n5_23-24-25",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-24",
+      "target": "n5_22-34-35",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-34",
+      "target": "n5_22-34-35",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-45",
+      "target": "n5_22-23-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-34",
+      "target": "n5_22-23-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-23",
+      "target": "n5_22-23-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-45",
+      "target": "n5_23-24-35",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-24",
+      "target": "n5_23-24-35",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-34",
+      "target": "n5_22-33-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-33",
+      "target": "n5_22-33-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-23",
+      "target": "n5_12-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-23",
+      "target": "n5_12-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-22",
+      "target": "n5_12-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-33",
+      "target": "n5_12-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-33",
+      "target": "n5_12-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-22",
+      "target": "n5_12-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-23",
+      "target": "n5_12-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-33",
+      "target": "n5_12-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-23",
+      "target": "n5_12-23-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-24",
+      "target": "n5_12-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-23",
+      "target": "n5_12-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-34",
+      "target": "n5_12-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-33",
+      "target": "n5_12-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-23",
+      "target": "n5_12-23-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-34",
+      "target": "n5_12-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-34",
+      "target": "n5_12-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-22",
+      "target": "n5_12-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-24",
+      "target": "n5_12-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-34",
+      "target": "n5_12-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-23",
+      "target": "n5_12-23-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-23",
+      "target": "n5_12-33-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-34",
+      "target": "n5_12-33-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-33",
+      "target": "n5_12-33-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-33",
+      "target": "n5_12-33-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-33",
+      "target": "n5_12-33-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-45",
+      "target": "n5_12-23-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-34",
+      "target": "n5_12-23-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-23",
+      "target": "n5_12-23-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-24",
+      "target": "n5_12-34-35",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-34",
+      "target": "n5_12-34-35",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-34",
+      "target": "n5_12-33-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-34",
+      "target": "n5_12-33-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-33",
+      "target": "n5_12-33-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-33",
+      "target": "n5_12-13-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-22",
+      "target": "n5_12-13-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-13",
+      "target": "n5_12-13-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-23",
+      "target": "n5_12-13-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-13",
+      "target": "n5_12-13-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-34",
+      "target": "n5_12-13-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-23",
+      "target": "n5_12-13-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-13",
+      "target": "n5_12-13-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-33",
+      "target": "n5_12-13-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-13",
+      "target": "n5_12-13-44",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-34",
+      "target": "n5_12-13-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-13",
+      "target": "n5_12-13-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-13",
+      "target": "n5_12-13-14",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-23",
+      "target": "n5_11-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-23",
+      "target": "n5_11-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-22",
+      "target": "n5_11-22-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-33",
+      "target": "n5_11-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-22",
+      "target": "n5_11-22-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-24",
+      "target": "n5_11-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-23",
+      "target": "n5_11-23-24",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_22-34",
+      "target": "n5_11-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-23",
+      "target": "n5_11-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-22",
+      "target": "n5_11-22-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_23-45",
+      "target": "n5_11-23-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-23",
+      "target": "n5_11-23-45",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-22",
+      "target": "n5_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-22",
+      "target": "n5_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-12",
+      "target": "n5_11-12-22",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-23",
+      "target": "n5_11-12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-23",
+      "target": "n5_11-12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-12",
+      "target": "n5_11-12-23",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-33",
+      "target": "n5_11-12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-22",
+      "target": "n5_11-12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-12",
+      "target": "n5_11-12-33",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-34",
+      "target": "n5_11-12-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-23",
+      "target": "n5_11-12-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-12",
+      "target": "n5_11-12-34",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_12-13",
+      "target": "n5_11-12-13",
+      "kind": "subideal"
+    },
+    {
+      "source": "n5_11-12",
+      "target": "n5_11-12-13",
+      "kind": "subideal"
+    },
+    {
+      "source": "n1_empty",
+      "target": "n2_empty",
+      "kind": "embed"
+    },
+    {
+      "source": "n1_11",
+      "target": "n2_11",
+      "kind": "embed"
+    },
+    {
+      "source": "n2_empty",
+      "target": "n3_empty",
+      "kind": "embed"
+    },
+    {
+      "source": "n2_22",
+      "target": "n3_22",
+      "kind": "embed"
+    },
+    {
+      "source": "n2_12",
+      "target": "n3_12",
+      "kind": "embed"
+    },
+    {
+      "source": "n2_11",
+      "target": "n3_11",
+      "kind": "embed"
+    },
+    {
+      "source": "n2_12-22",
+      "target": "n3_12-22",
+      "kind": "embed"
+    },
+    {
+      "source": "n2_11-22",
+      "target": "n3_11-22",
+      "kind": "embed"
+    },
+    {
+      "source": "n2_11-12",
+      "target": "n3_11-12",
+      "kind": "embed"
+    },
+    {
+      "source": "n2_11-12-22",
+      "target": "n3_11-12-22",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_empty",
+      "target": "n4_empty",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_22",
+      "target": "n4_22",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_23",
+      "target": "n4_23",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_12",
+      "target": "n4_12",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_11",
+      "target": "n4_11",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_22-23",
+      "target": "n4_22-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_22-33",
+      "target": "n4_22-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_12-22",
+      "target": "n4_12-22",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_12-23",
+      "target": "n4_12-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_12-33",
+      "target": "n4_12-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_12-13",
+      "target": "n4_12-13",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_11-22",
+      "target": "n4_11-22",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_11-23",
+      "target": "n4_11-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_11-12",
+      "target": "n4_11-12",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_22-23-33",
+      "target": "n4_22-23-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_12-22-23",
+      "target": "n4_12-22-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_12-22-33",
+      "target": "n4_12-22-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_12-23-33",
+      "target": "n4_12-23-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_12-13-22",
+      "target": "n4_12-13-22",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_12-13-23",
+      "target": "n4_12-13-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_11-22-23",
+      "target": "n4_11-22-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_11-22-33",
+      "target": "n4_11-22-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_11-12-22",
+      "target": "n4_11-12-22",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_11-12-23",
+      "target": "n4_11-12-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_11-12-33",
+      "target": "n4_11-12-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n3_11-12-13",
+      "target": "n4_11-12-13",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_empty",
+      "target": "n5_empty",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_22",
+      "target": "n5_22",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_23",
+      "target": "n5_23",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12",
+      "target": "n5_12",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11",
+      "target": "n5_11",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_22-23",
+      "target": "n5_22-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_22-33",
+      "target": "n5_22-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_23-24",
+      "target": "n5_23-24",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_22-34",
+      "target": "n5_22-34",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-22",
+      "target": "n5_12-22",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-23",
+      "target": "n5_12-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-33",
+      "target": "n5_12-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-34",
+      "target": "n5_12-34",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-13",
+      "target": "n5_12-13",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-22",
+      "target": "n5_11-22",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-23",
+      "target": "n5_11-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-12",
+      "target": "n5_11-12",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_22-23-33",
+      "target": "n5_22-23-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_22-23-24",
+      "target": "n5_22-23-24",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_22-23-44",
+      "target": "n5_22-23-44",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_22-23-34",
+      "target": "n5_22-23-34",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_23-24-34",
+      "target": "n5_23-24-34",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_22-33-44",
+      "target": "n5_22-33-44",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-22-23",
+      "target": "n5_12-22-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-22-33",
+      "target": "n5_12-22-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-23-33",
+      "target": "n5_12-23-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-23-24",
+      "target": "n5_12-23-24",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-23-44",
+      "target": "n5_12-23-44",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-22-34",
+      "target": "n5_12-22-34",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-23-34",
+      "target": "n5_12-23-34",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-33-34",
+      "target": "n5_12-33-34",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-33-44",
+      "target": "n5_12-33-44",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-13-22",
+      "target": "n5_12-13-22",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-13-23",
+      "target": "n5_12-13-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-13-24",
+      "target": "n5_12-13-24",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-13-44",
+      "target": "n5_12-13-44",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_12-13-14",
+      "target": "n5_12-13-14",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-22-23",
+      "target": "n5_11-22-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-22-33",
+      "target": "n5_11-22-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-23-24",
+      "target": "n5_11-23-24",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-22-34",
+      "target": "n5_11-22-34",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-12-22",
+      "target": "n5_11-12-22",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-12-23",
+      "target": "n5_11-12-23",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-12-33",
+      "target": "n5_11-12-33",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-12-34",
+      "target": "n5_11-12-34",
+      "kind": "embed"
+    },
+    {
+      "source": "n4_11-12-13",
+      "target": "n5_11-12-13",
+      "kind": "embed"
+    }
+  ]
+};
+atlas = __ATLAS;
+initGraph();
+applyFilters();
+document.getElementById('stat').textContent = atlas.cards.length + ' cartas · ' + atlas.edges.length + ' relaciones';
+
+// ----- Build the Cytoscape graph -----
+function initGraph() {
+  const els = [];
+  for (const c of atlas.cards) {
+    els.push({
+      data: {
+        id: c.id,
+        label: c.I_str,
+        n: c.n, gens: c.gens, family: c.family,
+        bettiHead: (c.betti||[]).slice(0,5).join(','),
+      },
+      classes: c.family,
+    });
+  }
+  for (const e of atlas.edges) {
+    els.push({
+      data: { id: `${e.source}->${e.target}`, source: e.source, target: e.target, kind: e.kind },
+      classes: e.kind,
+    });
+  }
+
+  cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: els,
+    layout: {
+      name: 'preset',
+      positions: (node) => {
+        const c = atlas.cards.find(c => c.id === node.id());
+        if (!c) return { x: 0, y: 0 };
+        // Structural layout: x by n, y by |I| with intra-bin jitter
+        const baseX = (c.n - 1) * 230;
+        const baseY = c.gens * 170;
+        // jitter inside bin
+        const samebin = atlas.cards.filter(d => d.n === c.n && d.gens === c.gens);
+        const idx = samebin.indexOf(c);
+        const total = samebin.length;
+        const angle = (idx / Math.max(1,total)) * Math.PI * 2;
+        const radius = Math.min(70, 8 * Math.sqrt(total));
+        return {
+          x: baseX + Math.cos(angle) * radius,
+          y: baseY + Math.sin(angle) * radius * 0.5
+        };
+      }
+    },
+    style: [
+      {
+        selector: 'node',
+        style: {
+          'background-color': ele => FAMILY_COLOR[ele.data('family')] || '#888',
+          'border-width': 1,
+          'border-color': '#222',
+          'label': 'data(label)',
+          'font-family': 'JetBrains Mono, monospace',
+          'font-size': 9,
+          'color': '#9a9aa0',
+          'text-margin-y': -10,
+          'text-halign': 'center',
+          'text-valign': 'top',
+          'width': ele => 12 + 2 * Math.min(10, ele.data('gens') * 2 + ele.data('n')),
+          'height': ele => 12 + 2 * Math.min(10, ele.data('gens') * 2 + ele.data('n'))
+        }
+      },
+      {
+        selector: 'node:selected',
+        style: {
+          'border-color': '#c1a878',
+          'border-width': 3,
+          'color': '#c1a878'
+        }
+      },
+      {
+        selector: 'edge',
+        style: {
+          'width': 1,
+          'line-color': '#2e2e34',
+          'curve-style': 'straight',
+          'opacity': 0.55,
+          'target-arrow-shape': 'none'
+        }
+      },
+      {
+        selector: 'edge.subideal',
+        style: { 'line-color': '#3a3a40', 'opacity': 0.5 }
+      },
+      {
+        selector: 'edge.embed',
+        style: { 'line-color': '#5a4a30', 'line-style': 'dashed', 'opacity': 0.45 }
+      },
+      {
+        selector: 'edge:selected',
+        style: { 'line-color': '#c1a878', 'opacity': 1, 'width': 2 }
+      }
+    ],
+    wheelSensitivity: 0.2,
+    minZoom: 0.25,
+    maxZoom: 4
+  });
+
+  cy.on('tap', 'node', evt => selectCard(evt.target.id()));
+  cy.on('tap', (e) => { if (e.target === cy) { /* background tap = noop */ } });
+}
+
+// ----- Filters -----
+['filter-n','filter-gens','filter-family'].forEach(id => {
+  document.getElementById(id).addEventListener('change', applyFilters);
+});
+
+function applyFilters() {
+  const fn = document.getElementById('filter-n').value;
+  const fg = document.getElementById('filter-gens').value;
+  const ff = document.getElementById('filter-family').value;
+  cy.batch(() => {
+    cy.nodes().forEach(n => {
+      const c = atlas.cards.find(c => c.id === n.id());
+      const visible = (fn==='all' || +fn===c.n) &&
+                      (fg==='all' || +fg===c.gens) &&
+                      (ff==='all' || ff===c.family);
+      n.style('display', visible ? 'element' : 'none');
+    });
+    cy.edges().forEach(e => {
+      const src = cy.getElementById(e.data('source')).style('display');
+      const tgt = cy.getElementById(e.data('target')).style('display');
+      e.style('display', (src!=='none' && tgt!=='none') ? 'element' : 'none');
+    });
+  });
+}
+
+// ----- Card render -----
+function selectCard(id) {
+  selectedId = id;
+  cy.elements().unselect();
+  cy.getElementById(id).select();
+  const card = atlas.cards.find(c => c.id === id);
+  if (!card) return;
+
+  // Recompute the CD locally for the diagram
+  const cd = CDCore.buildCD({
+    n: card.n,
+    relations: card.I,
+    initVars: [1],
+    levels: Math.min(9, atlas.meta.levels)
+  });
+
+  const neighbors = atlas.edges
+    .filter(e => e.source === id || e.target === id)
+    .map(e => ({
+      otherId: e.source === id ? e.target : e.source,
+      kind: e.kind
+    }));
+
+  const otherIdInfo = neighbors
+    .map(nb => ({ ...nb, card: atlas.cards.find(c => c.id === nb.otherId) }))
+    .filter(x => x.card)
+    .sort((a, b) => a.card.n - b.card.n || a.card.gens - b.card.gens);
+
+  const el = document.getElementById('card');
+  el.innerHTML = `
+    <div class="card-title">${escapeHtml(formatTitle(card))}</div>
+    <div class="card-sub">${card.id} · familia <span style="color:${FAMILY_COLOR[card.family]||'#888'}">${card.family}</span></div>
+
+    <div class="kv">
+      <div class="k">R</div><div class="v">${ringTeX(card)}</div>
+      <div class="k">I</div><div class="v">${idealTeX(card)}</div>
+      <div class="k">M</div><div class="v"><code>R/(x₁)</code></div>
+      <div class="k">|I|</div><div class="v">${card.gens}</div>
+      <div class="k">d∘d=0</div><div class="v">${card.dd_zero ? '<span style="color:#4ea27a">verificado</span>' : '<span style="color:#c1440e">violación</span>'}</div>
+    </div>
+
+    <div class="card-section">
+      <h3>Sucesión Betti</h3>
+      <div class="betti-row">${(card.betti||[]).join(',&nbsp; ')}</div>
+    </div>
+
+    <div class="card-section">
+      <h3>Diagrama</h3>
+      <div class="diagram-wrap" id="diag-wrap"></div>
+    </div>
+
+    <div class="card-section">
+      <h3>Diferenciales</h3>
+      <div class="matrices" id="mats"></div>
+    </div>
+
+    <div class="card-section">
+      <h3>Cartas vecinas (${otherIdInfo.length})</h3>
+      <div class="neighbors">
+        ${otherIdInfo.slice(0, 16).map(x => `
+          <div class="neighbor" data-id="${x.otherId}">
+            <span class="nid">${escapeHtml(x.card.I_str)}</span>
+            <span style="font-family:'EB Garamond';color:#8a8a90;font-size:0.84rem">n=${x.card.n}, |I|=${x.card.gens}</span>
+            <span class="nkind">${x.kind}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+
+  // Wire up neighbor clicks
+  el.querySelectorAll('.neighbor').forEach(n =>
+    n.addEventListener('click', () => selectCard(n.dataset.id)));
+
+  // Render diagram
+  document.getElementById('diag-wrap').appendChild(renderDiagramSVG(cd));
+
+  // Render matrices
+  const mats = CDCore.buildMatrices(cd);
+  const matsEl = document.getElementById('mats');
+  mats.forEach((M, idx) => {
+    if (!M) return;
+    const g = idx + 1;
+    if (cd.nodes[g] && cd.nodes[g].length === 0) return;
+    const block = document.createElement('div');
+    block.className = 'matrix-block';
+    block.innerHTML = `<div class="mlabel">d_${g} : F_${g} → F_${g-1}  &nbsp;(${M.length}×${M[0]?.length||0})</div>`;
+    if (M.length === 0 || M[0].length === 0) {
+      block.innerHTML += '<em style="color:#666">(vacío)</em>';
+    } else {
+      const tbl = document.createElement('table');
+      for (const row of M) {
+        const tr = document.createElement('tr');
+        for (const cell of row) {
+          const td = document.createElement('td');
+          td.innerHTML = entryHtml(cell);
+          tr.appendChild(td);
+        }
+        tbl.appendChild(tr);
+      }
+      block.appendChild(tbl);
+    }
+    matsEl.appendChild(block);
+  });
+}
+
+function formatTitle(card) {
+  if (card.gens === 0) return `M = R/(x₁) sobre R = k[x_1,…,x_${card.n}]`;
+  return `M = R/(x₁) sobre R = k[x_1,…,x_${card.n}]/I`;
+}
+function ringTeX(card) {
+  return `<code>k[x_1,…,x_${card.n}]${card.gens===0 ? '' : '/I'}</code>`;
+}
+function idealTeX(card) {
+  if (card.gens === 0) return '<code>∅</code>';
+  const terms = card.I.map(([a,b]) => `x_${a}x_${b}`);
+  return `<code>(${terms.join(', ')})</code>`;
+}
+function entryHtml(cell) {
+  if (!cell || cell.length === 0) return '0';
+  return cell.map(t =>
+    (t.sign === -1 ? '−' : '+') + `x<sub>${t.idx}</sub>`
+  ).join(' ').replace(/^\+/, '');
+}
+function escapeHtml(s) {
+  return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+// ----- Diagram SVG -----
+function renderDiagramSVG(cd) {
+  const xmlns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(xmlns, 'svg');
+
+  const VAR_COLORS = ['#6e6cc9','#c1440e','#4ea27a','#cfa033','#a673c1','#6ec0c9'];
+  const varColor = i => VAR_COLORS[(i-1) % VAR_COLORS.length];
+
+  const LEVEL_W = 90;
+  const NODE_R = 4;
+  const colSpacing = LEVEL_W;
+  const rowSpacing = 32;
+  const maxLevel = cd.nodes.findIndex(l => !l || l.length === 0);
+  const upto = maxLevel === -1 ? cd.nodes.length : maxLevel;
+
+  // position
+  const pos = {};
+  let maxNodes = 0;
+  for (let g = 0; g < upto; g++) {
+    const layer = cd.nodes[g] || [];
+    maxNodes = Math.max(maxNodes, layer.length);
+    layer.forEach((node, k) => {
+      pos[node.id] = {
+        x: 30 + g * colSpacing,
+        y: 30 + k * rowSpacing - (layer.length-1)*rowSpacing/2 + 80
+      };
+    });
+  }
+  const W = 30 + upto * colSpacing + 20;
+  const H = Math.max(180, 60 + maxNodes * rowSpacing + 60);
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+
+  // arrows
+  for (const a of cd.arrows) {
+    const fromNode = cd.nodes[a.fromG]?.find(n => n.p === a.fromP);
+    const toNode = cd.nodes[a.toG]?.find(n => n.p === a.toP);
+    if (!fromNode || !toNode) continue;
+    const p1 = pos[fromNode.id], p2 = pos[toNode.id];
+    if (!p1 || !p2) continue;
+    const col = varColor(a.idx);
+
+    const line = document.createElementNS(xmlns, 'line');
+    line.setAttribute('x1', p1.x);
+    line.setAttribute('y1', p1.y);
+    line.setAttribute('x2', p2.x);
+    line.setAttribute('y2', p2.y);
+    line.setAttribute('stroke', col);
+    line.setAttribute('stroke-width', 1.1);
+    if (a.sign === -1) line.setAttribute('stroke-dasharray', '3 2');
+    line.setAttribute('opacity', '0.85');
+    svg.appendChild(line);
+
+    // small label at midpoint, only for small diagrams
+    if (cd.nodes.flat().length < 30) {
+      const lab = document.createElementNS(xmlns, 'text');
+      lab.setAttribute('x', (p1.x + p2.x)/2);
+      lab.setAttribute('y', (p1.y + p2.y)/2 - 3);
+      lab.setAttribute('fill', col);
+      lab.setAttribute('font-family', 'JetBrains Mono, monospace');
+      lab.setAttribute('font-size', '8');
+      lab.setAttribute('text-anchor', 'middle');
+      lab.textContent = (a.sign===-1?'−':'') + 'x' + a.idx;
+      svg.appendChild(lab);
+    }
+  }
+
+  // nodes
+  for (let g = 0; g < upto; g++) {
+    const layer = cd.nodes[g] || [];
+    layer.forEach(node => {
+      const p = pos[node.id];
+      const c = document.createElementNS(xmlns, 'circle');
+      c.setAttribute('cx', p.x);
+      c.setAttribute('cy', p.y);
+      c.setAttribute('r', NODE_R);
+      c.setAttribute('fill', '#e8e8ec');
+      c.setAttribute('stroke', '#1a1a1d');
+      c.setAttribute('stroke-width', '0.8');
+      svg.appendChild(c);
+    });
+    // degree label
+    const lab = document.createElementNS(xmlns, 'text');
+    lab.setAttribute('x', 30 + g * colSpacing);
+    lab.setAttribute('y', H - 14);
+    lab.setAttribute('text-anchor', 'middle');
+    lab.setAttribute('fill', '#7a7a80');
+    lab.setAttribute('font-family', 'JetBrains Mono, monospace');
+    lab.setAttribute('font-size', '9');
+    lab.textContent = `F${g}`;
+    svg.appendChild(lab);
+  }
+
+  return svg;
+}
+</script>
+</body>
+</html>
