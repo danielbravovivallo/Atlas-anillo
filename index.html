@@ -15,11 +15,13 @@
   --text:      #d9d9dc;
   --text-muted:#8a8a90;
   --accent:    #c1a878;
-  --CDuno:     #6e6cc9;   /* indigo */
-  --CDdos:     #c1440e;   /* brick red */
-  --CDtres:    #4ea27a;   /* moss green */
-  --CDcuatro:  #cfa033;   /* ochre */
-  --CDgris:    #5a5a5e;   /* graphite */
+  --CDuno:     #6e6cc9;
+  --CDdos:     #c1440e;
+  --CDtres:    #4ea27a;
+  --CDcuatro:  #cfa033;
+  --CDcinco:   #a673c1;
+  --CDseis:    #6ec0c9;
+  --CDgris:    #5a5a5e;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,156 +35,131 @@ html, body {
 }
 
 header {
-  padding: 0.9rem 1.5rem;
+  padding: 0.85rem 1.5rem;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: baseline;
   gap: 1.5rem;
 }
-header h1 {
-  font-weight: 500;
-  font-size: 1.4rem;
-  letter-spacing: 0.02em;
-}
-header h1 em {
-  font-style: italic;
-  color: var(--accent);
-}
-header .subtitle {
-  font-size: 0.86rem;
-  color: var(--text-muted);
-  font-style: italic;
-}
+header h1 { font-weight: 500; font-size: 1.4rem; letter-spacing: 0.02em; }
+header h1 em { font-style: italic; color: var(--accent); }
+header .subtitle { font-size: 0.86rem; color: var(--text-muted); font-style: italic; }
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr 460px;
+  grid-template-columns: 340px 1fr 380px;
   height: calc(100% - 56px);
 }
 
-/* ─── MAPA ─── */
-#map-wrap {
-  position: relative;
+/* ───────── PANEL IZQUIERDO ───────── */
+#meta {
+  background: var(--panel);
   border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-}
-.toolbar {
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  font-size: 0.78rem;
-  flex-wrap: wrap;
-  background: var(--panel);
-}
-.toolbar label {
-  display: flex; align-items: center; gap: 0.35rem;
-  font-family: 'JetBrains Mono', monospace;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-.toolbar select, .toolbar input {
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 0.25rem 0.5rem;
-  border-radius: 3px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78rem;
-}
-.toolbar .stat {
-  margin-left: auto;
-  color: var(--text-muted);
-  font-family: 'JetBrains Mono', monospace;
-}
-#cy { flex: 1; background: var(--bg); }
-
-/* ─── CARTA ─── */
-#card {
-  background: var(--panel);
   overflow-y: auto;
-  padding: 1.4rem 1.5rem;
+  padding: 1.2rem 1.1rem;
 }
-#card .empty {
-  color: var(--text-muted);
-  font-style: italic;
-  margin-top: 2rem;
-}
+#meta .empty { color: var(--text-muted); font-style: italic; margin-top: 2rem; font-size: 0.95rem; }
+
 .card-title {
-  font-size: 1.45rem;
+  font-size: 1.25rem;
   font-weight: 500;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.3rem;
   letter-spacing: 0.01em;
+  line-height: 1.25;
 }
 .card-sub {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   color: var(--text-muted);
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.9rem;
 }
-.card-section {
-  margin-top: 1.5rem;
-  border-top: 1px solid var(--border);
-  padding-top: 1rem;
+
+/* segmented toggles */
+.toggle-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
 }
-.card-section h3 {
+.toggle-row .label {
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  min-width: 70px;
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--panel-2);
+}
+.seg button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.74rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 0.6rem;
-  font-weight: 500;
+  padding: 0.28rem 0.55rem;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
 }
+.seg button:last-child { border-right: none; }
+.seg button.active {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+}
+.seg button:hover:not(.active) { color: var(--text); background: #25252a; }
+
 .kv {
   display: grid;
-  grid-template-columns: 110px 1fr;
-  row-gap: 0.35rem;
-  font-size: 0.94rem;
+  grid-template-columns: 70px 1fr;
+  row-gap: 0.3rem;
+  font-size: 0.92rem;
+  margin-top: 0.9rem;
 }
 .kv .k {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   padding-top: 0.1rem;
 }
-.kv .v {
-  font-family: 'EB Garamond', serif;
-  font-size: 1rem;
-}
 .kv .v code {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   color: var(--accent);
 }
+
+.section { margin-top: 1.1rem; padding-top: 0.8rem; border-top: 1px solid var(--border); }
+.section h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
 .betti-row {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.88rem;
+  font-size: 0.84rem;
   color: var(--text);
   background: var(--panel-2);
-  padding: 0.5rem 0.7rem;
+  padding: 0.45rem 0.6rem;
   border-radius: 3px;
   overflow-x: auto;
   white-space: nowrap;
 }
-.diagram-wrap {
-  background: var(--panel-2);
-  border-radius: 3px;
-  padding: 0.7rem;
-  overflow-x: auto;
-}
-.neighbors {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
+
+.neighbors { display: flex; flex-direction: column; gap: 0.2rem; }
 .neighbor {
   display: flex;
   align-items: baseline;
-  gap: 0.6rem;
-  padding: 0.35rem 0.5rem;
+  gap: 0.4rem;
+  padding: 0.3rem 0.45rem;
   background: var(--panel-2);
   border-radius: 3px;
   cursor: pointer;
@@ -192,91 +169,197 @@ header .subtitle {
 .neighbor:hover { border-color: var(--accent); }
 .neighbor .nid {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: var(--accent);
 }
-.neighbor .nkind {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  margin-left: auto;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
+.neighbor .nmeta { font-size: 0.78rem; color: var(--text-muted); margin-left: auto; }
 
-/* matrices */
-.matrices {
+/* ───────── PANEL CENTRAL ───────── */
+#stage {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  overflow: hidden;
+  background: var(--bg);
+}
+.stage-toolbar {
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-size: 0.78rem;
+  background: var(--panel);
+}
+.stage-toolbar .module-label {
+  font-family: 'EB Garamond', serif;
+  font-size: 1.05rem;
+  font-style: italic;
+  color: var(--text);
+}
+.stage-toolbar .right { margin-left: auto; display: flex; gap: 0.7rem; align-items: center; }
+
+#diag-area {
+  flex: 1;
+  overflow: auto;
+  padding: 1.2rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+#diag-area svg { background: transparent; }
+
+#mats-area {
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  max-height: 35%;
+  display: none;
+  flex-direction: column;
+}
+#mats-area.open { display: flex; }
+.mats-header {
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border);
+}
+.mats-body {
+  overflow: auto;
+  padding: 0.7rem 1rem 1rem;
 }
 .matrix-block {
   background: var(--panel-2);
-  padding: 0.55rem 0.7rem;
+  padding: 0.55rem 0.75rem;
   border-radius: 3px;
+  margin-bottom: 0.6rem;
   overflow-x: auto;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
 }
-.matrix-block .mlabel {
-  color: var(--text-muted);
-  font-size: 0.72rem;
-  margin-bottom: 0.3rem;
-}
-.matrix-block table {
-  border-collapse: collapse;
-}
+.matrix-block .mlabel { color: var(--text-muted); font-size: 0.7rem; margin-bottom: 0.3rem; }
+.matrix-block table { border-collapse: collapse; }
 .matrix-block td {
-  padding: 0.1rem 0.55rem;
+  padding: 0.12rem 0.6rem;
   text-align: center;
   color: var(--text);
+  border-left: 1px dashed #2a2a2e;
 }
+.matrix-block tr td:first-child { border-left: none; }
 
-/* node colors in cytoscape, by family */
-.legend {
+/* ───────── PANEL DERECHO (mapa) ───────── */
+#map-wrap {
+  border-left: 1px solid var(--border);
   display: flex;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-  font-size: 0.72rem;
-  font-family: 'JetBrains Mono', monospace;
+  flex-direction: column;
+  background: var(--bg);
 }
-.legend-item {
-  display: inline-flex;
+.map-toolbar {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0.5rem;
   align-items: center;
-  gap: 0.3rem;
+  font-size: 0.74rem;
+  flex-wrap: wrap;
+  background: var(--panel);
+}
+.map-toolbar label {
+  display: flex; align-items: center; gap: 0.3rem;
+  font-family: 'JetBrains Mono', monospace;
   color: var(--text-muted);
 }
-.legend-dot {
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  display: inline-block;
+.map-toolbar select {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.18rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
 }
+.map-stat { font-family: 'JetBrains Mono', monospace; color: var(--text-muted); font-size: 0.7rem; }
+#cy { flex: 1; background: var(--bg); }
 
+.legend {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.68rem;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 0.4rem 0.7rem;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+}
+.legend-item { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--text-muted); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+/* matrix-term colors (set inline via varColor) */
+.mterm { font-weight: 500; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>Atlas <em>CD</em></h1>
-  <span class="subtitle">cartas de resoluciones Columna–Diamante de <span style="font-style:italic">M&nbsp;=&nbsp;R/(x<sub>1</sub>)</span></span>
+  <span class="subtitle">cartas de resoluciones Columna–Diamante</span>
 </header>
 
 <div class="layout">
+
+  <!-- ───────── METADATA (izquierda) ───────── -->
+  <div id="meta">
+    <div class="empty">Selecciona una carta del mapa para ver su resolución.</div>
+  </div>
+
+  <!-- ───────── STAGE (centro) ───────── -->
+  <div id="stage">
+    <div class="stage-toolbar">
+      <span class="module-label" id="module-label">—</span>
+      <div class="right">
+        <span style="color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:0.72rem">orientación</span>
+        <div class="seg" id="seg-orient">
+          <button data-v="horizontal" class="active">→</button>
+          <button data-v="vertical">↑</button>
+        </div>
+        <span style="color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:0.72rem">|</span>
+        <button id="btn-mats" class="seg" style="border-radius:3px;padding:0.28rem 0.7rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:0.72rem;background:var(--panel-2);border:1px solid var(--border);cursor:pointer">
+          mostrar diferenciales
+        </button>
+      </div>
+    </div>
+    <div id="diag-area">
+      <div style="color:var(--text-muted);font-style:italic;margin-top:3rem">El diagrama aparecerá aquí.</div>
+    </div>
+    <div id="mats-area">
+      <div class="mats-header">
+        <span>Diferenciales · términos coloreados por variable</span>
+        <button id="btn-mats-close" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:0.7rem">cerrar</button>
+      </div>
+      <div class="mats-body" id="mats-body"></div>
+    </div>
+  </div>
+
+  <!-- ───────── MAPA (derecha) ───────── -->
   <div id="map-wrap">
-    <div class="toolbar">
+    <div class="map-toolbar">
       <label>n<select id="filter-n">
-        <option value="all">todos</option>
+        <option value="all">·</option>
         <option value="1">1</option><option value="2">2</option>
         <option value="3">3</option><option value="4">4</option>
         <option value="5">5</option>
       </select></label>
       <label>|I|<select id="filter-gens">
-        <option value="all">todos</option>
+        <option value="all">·</option>
         <option value="0">0</option><option value="1">1</option>
         <option value="2">2</option><option value="3">3</option>
       </select></label>
-      <label>familia<select id="filter-family">
-        <option value="all">todas</option>
+      <label>fam<select id="filter-family">
+        <option value="all">·</option>
         <option value="free">free</option>
         <option value="squares-only">squares-only</option>
         <option value="fan-at-x1">fan-at-x1</option>
@@ -284,25 +367,23 @@ header .subtitle {
         <option value="path-like">path-like</option>
         <option value="mixed">mixed</option>
       </select></label>
-      <div class="legend">
-        <span class="legend-item"><span class="legend-dot" style="background:var(--CDuno)"></span>fan-at-x1</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--CDdos)"></span>fan</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--CDtres)"></span>path-like</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--CDcuatro)"></span>squares-only</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#888"></span>mixed</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--CDgris)"></span>free</span>
-      </div>
-      <div class="stat" id="stat"></div>
+      <span class="map-stat" id="stat"></span>
     </div>
     <div id="cy"></div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:var(--CDuno)"></span>fan-at-x1</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--CDdos)"></span>fan</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--CDtres)"></span>path-like</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--CDcuatro)"></span>squares-only</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#888"></span>mixed</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--CDgris)"></span>free</span>
+    </div>
   </div>
 
-  <div id="card">
-    <div class="empty">Selecciona una carta del mapa para ver su resolución.</div>
-  </div>
 </div>
 
 <script>
+/* ===== CD-CORE INLINE ===== */
 /*
  * cd-core.js — Column-Diamond core algorithm (sign-corrected).
  *
@@ -591,23 +672,9 @@ if (typeof module !== 'undefined' && module.exports) module.exports = API;
 if (typeof window !== 'undefined') window.CDCore = API;
 
 </script>
+
 <script>
-// ===== Atlas SPA =====
-
-const FAMILY_COLOR = {
-  'fan-at-x1':    '#6e6cc9',
-  'fan':          '#c1440e',
-  'path-like':    '#4ea27a',
-  'squares-only': '#cfa033',
-  'mixed':        '#888',
-  'free':         '#5a5a5e'
-};
-
-let atlas = null;
-let cy = null;
-let selectedId = null;
-
-// ----- Load data -----
+/* ===== ATLAS DATA INLINE ===== */
 const __ATLAS = {
   "meta": {
     "generated": "2026-06-15T22:59:15.493Z",
@@ -6966,22 +7033,65 @@ const __ATLAS = {
     }
   ]
 };
-atlas = __ATLAS;
+</script>
+
+<script>
+// ============ Atlas v2 ============
+
+const FAMILY_COLOR = {
+  'fan-at-x1':    '#6e6cc9',
+  'fan':          '#c1440e',
+  'path-like':    '#4ea27a',
+  'squares-only': '#cfa033',
+  'mixed':        '#888',
+  'free':         '#5a5a5e'
+};
+const VAR_COLORS = ['#6e6cc9','#c1440e','#4ea27a','#cfa033','#a673c1','#6ec0c9','#d97777','#a0a0a0'];
+const varColor = i => VAR_COLORS[(i-1) % VAR_COLORS.length];
+
+const atlas = __ATLAS;
+let cy = null;
+let selectedId = null;
+
+// view state
+let orient = 'horizontal';   // 'horizontal' | 'vertical'
+let moduleMode = 'x1';       // 'x1' | 'max'
+let matsOpen = false;
+
+// ----- init -----
 initGraph();
 applyFilters();
-document.getElementById('stat').textContent = atlas.cards.length + ' cartas · ' + atlas.edges.length + ' relaciones';
+document.getElementById('stat').textContent =
+  `${atlas.cards.length} cartas · ${atlas.edges.length} relaciones`;
 
-// ----- Build the Cytoscape graph -----
+// stage toolbar wiring
+document.querySelectorAll('#seg-orient button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#seg-orient button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    orient = b.dataset.v;
+    if (selectedId) renderCard(selectedId);
+  });
+});
+document.getElementById('btn-mats').addEventListener('click', () => {
+  matsOpen = !matsOpen;
+  document.getElementById('mats-area').classList.toggle('open', matsOpen);
+  document.getElementById('btn-mats').textContent =
+    matsOpen ? 'ocultar diferenciales' : 'mostrar diferenciales';
+  if (matsOpen && selectedId) renderMatrices(selectedId);
+});
+document.getElementById('btn-mats-close').addEventListener('click', () => {
+  matsOpen = false;
+  document.getElementById('mats-area').classList.remove('open');
+  document.getElementById('btn-mats').textContent = 'mostrar diferenciales';
+});
+
+// ----- Cytoscape graph -----
 function initGraph() {
   const els = [];
   for (const c of atlas.cards) {
     els.push({
-      data: {
-        id: c.id,
-        label: c.I_str,
-        n: c.n, gens: c.gens, family: c.family,
-        bettiHead: (c.betti||[]).slice(0,5).join(','),
-      },
+      data: { id: c.id, label: c.I_str, n: c.n, gens: c.gens, family: c.family },
       classes: c.family,
     });
   }
@@ -7000,15 +7110,13 @@ function initGraph() {
       positions: (node) => {
         const c = atlas.cards.find(c => c.id === node.id());
         if (!c) return { x: 0, y: 0 };
-        // Structural layout: x by n, y by |I| with intra-bin jitter
-        const baseX = (c.n - 1) * 230;
-        const baseY = c.gens * 170;
-        // jitter inside bin
+        const baseX = (c.n - 1) * 130;
+        const baseY = c.gens * 110;
         const samebin = atlas.cards.filter(d => d.n === c.n && d.gens === c.gens);
         const idx = samebin.indexOf(c);
         const total = samebin.length;
         const angle = (idx / Math.max(1,total)) * Math.PI * 2;
-        const radius = Math.min(70, 8 * Math.sqrt(total));
+        const radius = Math.min(45, 6 * Math.sqrt(total));
         return {
           x: baseX + Math.cos(angle) * radius,
           y: baseY + Math.sin(angle) * radius * 0.5
@@ -7016,68 +7124,39 @@ function initGraph() {
       }
     },
     style: [
-      {
-        selector: 'node',
-        style: {
+      { selector: 'node', style: {
           'background-color': ele => FAMILY_COLOR[ele.data('family')] || '#888',
-          'border-width': 1,
-          'border-color': '#222',
+          'border-width': 1, 'border-color': '#222',
           'label': 'data(label)',
           'font-family': 'JetBrains Mono, monospace',
-          'font-size': 9,
-          'color': '#9a9aa0',
-          'text-margin-y': -10,
-          'text-halign': 'center',
-          'text-valign': 'top',
-          'width': ele => 12 + 2 * Math.min(10, ele.data('gens') * 2 + ele.data('n')),
-          'height': ele => 12 + 2 * Math.min(10, ele.data('gens') * 2 + ele.data('n'))
-        }
-      },
-      {
-        selector: 'node:selected',
-        style: {
-          'border-color': '#c1a878',
-          'border-width': 3,
-          'color': '#c1a878'
-        }
-      },
-      {
-        selector: 'edge',
-        style: {
-          'width': 1,
-          'line-color': '#2e2e34',
-          'curve-style': 'straight',
-          'opacity': 0.55,
+          'font-size': 8, 'color': '#9a9aa0',
+          'text-margin-y': -8,
+          'text-halign': 'center', 'text-valign': 'top',
+          'width': ele => 10 + 2 * Math.min(8, ele.data('gens') * 2 + ele.data('n')),
+          'height': ele => 10 + 2 * Math.min(8, ele.data('gens') * 2 + ele.data('n'))
+        } },
+      { selector: 'node:selected', style: {
+          'border-color': '#c1a878', 'border-width': 3, 'color': '#c1a878'
+        } },
+      { selector: 'edge', style: {
+          'width': 1, 'line-color': '#2e2e34',
+          'curve-style': 'straight', 'opacity': 0.5,
           'target-arrow-shape': 'none'
-        }
-      },
-      {
-        selector: 'edge.subideal',
-        style: { 'line-color': '#3a3a40', 'opacity': 0.5 }
-      },
-      {
-        selector: 'edge.embed',
-        style: { 'line-color': '#5a4a30', 'line-style': 'dashed', 'opacity': 0.45 }
-      },
-      {
-        selector: 'edge:selected',
-        style: { 'line-color': '#c1a878', 'opacity': 1, 'width': 2 }
-      }
+        } },
+      { selector: 'edge.subideal', style: { 'line-color': '#3a3a40', 'opacity': 0.5 } },
+      { selector: 'edge.embed',    style: { 'line-color': '#5a4a30', 'line-style': 'dashed', 'opacity': 0.45 } },
+      { selector: 'edge:selected', style: { 'line-color': '#c1a878', 'opacity': 1, 'width': 2 } }
     ],
-    wheelSensitivity: 0.2,
-    minZoom: 0.25,
-    maxZoom: 4
+    wheelSensitivity: 0.2, minZoom: 0.25, maxZoom: 4
   });
 
-  cy.on('tap', 'node', evt => selectCard(evt.target.id()));
-  cy.on('tap', (e) => { if (e.target === cy) { /* background tap = noop */ } });
+  cy.on('tap', 'node', evt => renderCard(evt.target.id()));
 }
 
-// ----- Filters -----
+// ----- filters -----
 ['filter-n','filter-gens','filter-family'].forEach(id => {
   document.getElementById(id).addEventListener('change', applyFilters);
 });
-
 function applyFilters() {
   const fn = document.getElementById('filter-n').value;
   const fg = document.getElementById('filter-gens').value;
@@ -7085,182 +7164,194 @@ function applyFilters() {
   cy.batch(() => {
     cy.nodes().forEach(n => {
       const c = atlas.cards.find(c => c.id === n.id());
-      const visible = (fn==='all' || +fn===c.n) &&
-                      (fg==='all' || +fg===c.gens) &&
-                      (ff==='all' || ff===c.family);
-      n.style('display', visible ? 'element' : 'none');
+      const v = (fn==='all' || +fn===c.n) &&
+                (fg==='all' || +fg===c.gens) &&
+                (ff==='all' || ff===c.family);
+      n.style('display', v ? 'element' : 'none');
     });
     cy.edges().forEach(e => {
-      const src = cy.getElementById(e.data('source')).style('display');
-      const tgt = cy.getElementById(e.data('target')).style('display');
-      e.style('display', (src!=='none' && tgt!=='none') ? 'element' : 'none');
+      const s = cy.getElementById(e.data('source')).style('display');
+      const t = cy.getElementById(e.data('target')).style('display');
+      e.style('display', (s!=='none' && t!=='none') ? 'element' : 'none');
     });
   });
 }
 
-// ----- Card render -----
-function selectCard(id) {
+// ----- card render -----
+function renderCard(id) {
   selectedId = id;
   cy.elements().unselect();
   cy.getElementById(id).select();
   const card = atlas.cards.find(c => c.id === id);
   if (!card) return;
 
-  // Recompute the CD locally for the diagram
+  // Recompute CD with current module choice
+  const initVars = moduleMode === 'x1'
+    ? [1]
+    : Array.from({length: card.n}, (_, i) => i + 1);
   const cd = CDCore.buildCD({
     n: card.n,
     relations: card.I,
-    initVars: [1],
-    levels: Math.min(9, atlas.meta.levels)
+    initVars,
+    levels: 9
   });
+  const betti = CDCore.bettiNumbers(cd).slice(0, 9);
 
+  // ── module label in stage toolbar ──
+  document.getElementById('module-label').innerHTML = moduleLabelHtml(card);
+
+  // ── left panel ──
   const neighbors = atlas.edges
     .filter(e => e.source === id || e.target === id)
     .map(e => ({
       otherId: e.source === id ? e.target : e.source,
       kind: e.kind
     }));
-
-  const otherIdInfo = neighbors
+  const neighborCards = neighbors
     .map(nb => ({ ...nb, card: atlas.cards.find(c => c.id === nb.otherId) }))
     .filter(x => x.card)
     .sort((a, b) => a.card.n - b.card.n || a.card.gens - b.card.gens);
 
-  const el = document.getElementById('card');
-  el.innerHTML = `
+  document.getElementById('meta').innerHTML = `
     <div class="card-title">${escapeHtml(formatTitle(card))}</div>
     <div class="card-sub">${card.id} · familia <span style="color:${FAMILY_COLOR[card.family]||'#888'}">${card.family}</span></div>
+
+    <div class="toggle-row">
+      <span class="label">módulo M</span>
+      <div class="seg" id="seg-module">
+        <button data-v="x1" ${moduleMode==='x1'?'class="active"':''}>R/(x₁)</button>
+        <button data-v="max" ${moduleMode==='max'?'class="active"':''}>R/𝔪</button>
+      </div>
+    </div>
 
     <div class="kv">
       <div class="k">R</div><div class="v">${ringTeX(card)}</div>
       <div class="k">I</div><div class="v">${idealTeX(card)}</div>
-      <div class="k">M</div><div class="v"><code>R/(x₁)</code></div>
+      <div class="k">M</div><div class="v">${moduleTeX(card)}</div>
       <div class="k">|I|</div><div class="v">${card.gens}</div>
       <div class="k">d∘d=0</div><div class="v">${card.dd_zero ? '<span style="color:#4ea27a">verificado</span>' : '<span style="color:#c1440e">violación</span>'}</div>
     </div>
 
-    <div class="card-section">
+    <div class="section">
       <h3>Sucesión Betti</h3>
-      <div class="betti-row">${(card.betti||[]).join(',&nbsp; ')}</div>
+      <div class="betti-row">${betti.join(',&nbsp; ')}</div>
     </div>
 
-    <div class="card-section">
-      <h3>Diagrama</h3>
-      <div class="diagram-wrap" id="diag-wrap"></div>
-    </div>
-
-    <div class="card-section">
-      <h3>Diferenciales</h3>
-      <div class="matrices" id="mats"></div>
-    </div>
-
-    <div class="card-section">
-      <h3>Cartas vecinas (${otherIdInfo.length})</h3>
+    <div class="section">
+      <h3>Cartas vecinas (${neighborCards.length})</h3>
       <div class="neighbors">
-        ${otherIdInfo.slice(0, 16).map(x => `
+        ${neighborCards.slice(0, 16).map(x => `
           <div class="neighbor" data-id="${x.otherId}">
             <span class="nid">${escapeHtml(x.card.I_str)}</span>
-            <span style="font-family:'EB Garamond';color:#8a8a90;font-size:0.84rem">n=${x.card.n}, |I|=${x.card.gens}</span>
-            <span class="nkind">${x.kind}</span>
+            <span class="nmeta">n=${x.card.n}, |I|=${x.card.gens}</span>
           </div>`).join('')}
       </div>
     </div>
   `;
 
-  // Wire up neighbor clicks
-  el.querySelectorAll('.neighbor').forEach(n =>
-    n.addEventListener('click', () => selectCard(n.dataset.id)));
-
-  // Render diagram
-  document.getElementById('diag-wrap').appendChild(renderDiagramSVG(cd));
-
-  // Render matrices
-  const mats = CDCore.buildMatrices(cd);
-  const matsEl = document.getElementById('mats');
-  mats.forEach((M, idx) => {
-    if (!M) return;
-    const g = idx + 1;
-    if (cd.nodes[g] && cd.nodes[g].length === 0) return;
-    const block = document.createElement('div');
-    block.className = 'matrix-block';
-    block.innerHTML = `<div class="mlabel">d_${g} : F_${g} → F_${g-1}  &nbsp;(${M.length}×${M[0]?.length||0})</div>`;
-    if (M.length === 0 || M[0].length === 0) {
-      block.innerHTML += '<em style="color:#666">(vacío)</em>';
-    } else {
-      const tbl = document.createElement('table');
-      for (const row of M) {
-        const tr = document.createElement('tr');
-        for (const cell of row) {
-          const td = document.createElement('td');
-          td.innerHTML = entryHtml(cell);
-          tr.appendChild(td);
-        }
-        tbl.appendChild(tr);
-      }
-      block.appendChild(tbl);
-    }
-    matsEl.appendChild(block);
+  // module toggle
+  document.querySelectorAll('#seg-module button').forEach(b => {
+    b.addEventListener('click', () => {
+      moduleMode = b.dataset.v;
+      renderCard(id);
+    });
   });
+  // neighbors
+  document.querySelectorAll('#meta .neighbor').forEach(n =>
+    n.addEventListener('click', () => renderCard(n.dataset.id)));
+
+  // ── center stage: diagram ──
+  const diagArea = document.getElementById('diag-area');
+  diagArea.innerHTML = '';
+  diagArea.appendChild(renderDiagramSVG(cd, orient));
+
+  // matrices (only if open)
+  if (matsOpen) renderMatrices(id);
 }
 
+function moduleLabelHtml(card) {
+  const ring = card.gens === 0
+    ? `k[x_1,\u2026,x_${card.n}]`
+    : `k[x_1,\u2026,x_${card.n}]/I`;
+  const mod = moduleMode === 'x1' ? 'R/(x_1)' : 'R/\u{1D52A}';
+  return `<em>M</em> = <em>${mod}</em> &nbsp;sobre&nbsp; <em>R</em> = <em>${ring}</em>`;
+}
 function formatTitle(card) {
-  if (card.gens === 0) return `M = R/(x₁) sobre R = k[x_1,…,x_${card.n}]`;
-  return `M = R/(x₁) sobre R = k[x_1,…,x_${card.n}]/I`;
+  const r = card.gens === 0 ? `k[x_1,…,x_${card.n}]` : `k[x_1,…,x_${card.n}]/I`;
+  return `R = ${r}`;
 }
 function ringTeX(card) {
   return `<code>k[x_1,…,x_${card.n}]${card.gens===0 ? '' : '/I'}</code>`;
 }
 function idealTeX(card) {
   if (card.gens === 0) return '<code>∅</code>';
-  const terms = card.I.map(([a,b]) => `x_${a}x_${b}`);
-  return `<code>(${terms.join(', ')})</code>`;
+  return `<code>(${card.I.map(([a,b]) => `x_${a}x_${b}`).join(', ')})</code>`;
 }
-function entryHtml(cell) {
-  if (!cell || cell.length === 0) return '0';
-  return cell.map(t =>
-    (t.sign === -1 ? '−' : '+') + `x<sub>${t.idx}</sub>`
-  ).join(' ').replace(/^\+/, '');
+function moduleTeX(card) {
+  if (moduleMode === 'x1') return `<code>R/(x_1)</code>`;
+  return `<code>R/(x_1,…,x_${card.n})</code>`;
 }
 function escapeHtml(s) {
-  return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
-// ----- Diagram SVG -----
-function renderDiagramSVG(cd) {
+// ----- diagram SVG -----
+function renderDiagramSVG(cd, orientation) {
   const xmlns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(xmlns, 'svg');
 
-  const VAR_COLORS = ['#6e6cc9','#c1440e','#4ea27a','#cfa033','#a673c1','#6ec0c9'];
-  const varColor = i => VAR_COLORS[(i-1) % VAR_COLORS.length];
+  const NODE_R = 5;
+  const COL = 110;     // along the "level" axis
+  const ROW = 38;      // perpendicular (between nodes of same level)
+  const PAD = 40;
 
-  const LEVEL_W = 90;
-  const NODE_R = 4;
-  const colSpacing = LEVEL_W;
-  const rowSpacing = 32;
-  const maxLevel = cd.nodes.findIndex(l => !l || l.length === 0);
-  const upto = maxLevel === -1 ? cd.nodes.length : maxLevel;
-
-  // position
-  const pos = {};
-  let maxNodes = 0;
-  for (let g = 0; g < upto; g++) {
-    const layer = cd.nodes[g] || [];
-    maxNodes = Math.max(maxNodes, layer.length);
-    layer.forEach((node, k) => {
-      pos[node.id] = {
-        x: 30 + g * colSpacing,
-        y: 30 + k * rowSpacing - (layer.length-1)*rowSpacing/2 + 80
-      };
-    });
+  // determine non-empty levels
+  let upto = cd.nodes.length;
+  for (let i = 0; i < cd.nodes.length; i++) {
+    if (!cd.nodes[i] || cd.nodes[i].length === 0) { upto = i; break; }
   }
-  const W = 30 + upto * colSpacing + 20;
-  const H = Math.max(180, 60 + maxNodes * rowSpacing + 60);
+  if (upto === 0) upto = 1;
+
+  const maxNodes = Math.max(1, ...cd.nodes.slice(0, upto).map(l => l ? l.length : 0));
+
+  // position function — orientation switches axes
+  // horizontal: level along X (left→right), nodes along Y (centered)
+  // vertical:   level along Y (bottom→top), nodes along X (centered)
+  const pos = {};
+  let W, H;
+  if (orientation === 'horizontal') {
+    W = PAD * 2 + (upto - 1) * COL + 40;
+    H = PAD * 2 + Math.max(maxNodes, 1) * ROW;
+    for (let g = 0; g < upto; g++) {
+      const layer = cd.nodes[g] || [];
+      const yCenter = H / 2;
+      layer.forEach((node, k) => {
+        const offset = (k - (layer.length - 1) / 2) * ROW;
+        pos[node.id] = { x: PAD + g * COL, y: yCenter + offset };
+      });
+    }
+  } else { // vertical, bottom-up
+    W = PAD * 2 + Math.max(maxNodes, 1) * ROW;
+    H = PAD * 2 + (upto - 1) * COL + 40;
+    for (let g = 0; g < upto; g++) {
+      const layer = cd.nodes[g] || [];
+      const xCenter = W / 2;
+      layer.forEach((node, k) => {
+        const offset = (k - (layer.length - 1) / 2) * ROW;
+        pos[node.id] = { x: xCenter + offset, y: H - PAD - g * COL };
+      });
+    }
+  }
 
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.setAttribute('width', W);
   svg.setAttribute('height', H);
+  svg.style.maxWidth = '100%';
 
   // arrows
+  const totalNodes = cd.nodes.slice(0, upto).reduce((s, l) => s + (l ? l.length : 0), 0);
+  const showLabels = totalNodes < 30;
+
   for (const a of cd.arrows) {
     const fromNode = cd.nodes[a.fromG]?.find(n => n.p === a.fromP);
     const toNode = cd.nodes[a.toG]?.find(n => n.p === a.toP);
@@ -7270,24 +7361,24 @@ function renderDiagramSVG(cd) {
     const col = varColor(a.idx);
 
     const line = document.createElementNS(xmlns, 'line');
-    line.setAttribute('x1', p1.x);
-    line.setAttribute('y1', p1.y);
-    line.setAttribute('x2', p2.x);
-    line.setAttribute('y2', p2.y);
+    line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+    line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
     line.setAttribute('stroke', col);
-    line.setAttribute('stroke-width', 1.1);
-    if (a.sign === -1) line.setAttribute('stroke-dasharray', '3 2');
-    line.setAttribute('opacity', '0.85');
+    line.setAttribute('stroke-width', 1.25);
+    if (a.sign === -1) line.setAttribute('stroke-dasharray', '4 2');
+    line.setAttribute('opacity', '0.88');
     svg.appendChild(line);
 
-    // small label at midpoint, only for small diagrams
-    if (cd.nodes.flat().length < 30) {
+    if (showLabels) {
       const lab = document.createElementNS(xmlns, 'text');
-      lab.setAttribute('x', (p1.x + p2.x)/2);
-      lab.setAttribute('y', (p1.y + p2.y)/2 - 3);
+      const dx = p2.x - p1.x, dy = p2.y - p1.y;
+      const len = Math.hypot(dx, dy);
+      const nx = -dy / len, ny = dx / len;
+      lab.setAttribute('x', (p1.x + p2.x)/2 + nx * 6);
+      lab.setAttribute('y', (p1.y + p2.y)/2 + ny * 6 + 3);
       lab.setAttribute('fill', col);
       lab.setAttribute('font-family', 'JetBrains Mono, monospace');
-      lab.setAttribute('font-size', '8');
+      lab.setAttribute('font-size', '9');
       lab.setAttribute('text-anchor', 'middle');
       lab.textContent = (a.sign===-1?'−':'') + 'x' + a.idx;
       svg.appendChild(lab);
@@ -7300,27 +7391,76 @@ function renderDiagramSVG(cd) {
     layer.forEach(node => {
       const p = pos[node.id];
       const c = document.createElementNS(xmlns, 'circle');
-      c.setAttribute('cx', p.x);
-      c.setAttribute('cy', p.y);
+      c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
       c.setAttribute('r', NODE_R);
       c.setAttribute('fill', '#e8e8ec');
-      c.setAttribute('stroke', '#1a1a1d');
-      c.setAttribute('stroke-width', '0.8');
+      c.setAttribute('stroke', '#0e0e10');
+      c.setAttribute('stroke-width', '1');
       svg.appendChild(c);
     });
     // degree label
     const lab = document.createElementNS(xmlns, 'text');
-    lab.setAttribute('x', 30 + g * colSpacing);
-    lab.setAttribute('y', H - 14);
+    if (orientation === 'horizontal') {
+      lab.setAttribute('x', PAD + g * COL);
+      lab.setAttribute('y', H - 14);
+    } else {
+      lab.setAttribute('x', 18);
+      lab.setAttribute('y', H - PAD - g * COL + 4);
+    }
     lab.setAttribute('text-anchor', 'middle');
     lab.setAttribute('fill', '#7a7a80');
     lab.setAttribute('font-family', 'JetBrains Mono, monospace');
-    lab.setAttribute('font-size', '9');
+    lab.setAttribute('font-size', '10');
     lab.textContent = `F${g}`;
     svg.appendChild(lab);
   }
 
   return svg;
+}
+
+// ----- matrices with colored terms -----
+function renderMatrices(id) {
+  const card = atlas.cards.find(c => c.id === id);
+  if (!card) return;
+  const initVars = moduleMode === 'x1'
+    ? [1]
+    : Array.from({length: card.n}, (_, i) => i + 1);
+  const cd = CDCore.buildCD({ n: card.n, relations: card.I, initVars, levels: 9 });
+  const mats = CDCore.buildMatrices(cd);
+  const body = document.getElementById('mats-body');
+  body.innerHTML = '';
+  mats.forEach((M, idx) => {
+    if (!M) return;
+    const g = idx + 1;
+    if (!cd.nodes[g] || cd.nodes[g].length === 0) return;
+    const block = document.createElement('div');
+    block.className = 'matrix-block';
+    block.innerHTML = `<div class="mlabel">d_${g} : F_${g} → F_${g-1}  &nbsp;(${M.length}×${M[0]?.length||0})</div>`;
+    if (M.length === 0 || M[0].length === 0) {
+      block.innerHTML += '<em style="color:#666">(vacío)</em>';
+    } else {
+      const tbl = document.createElement('table');
+      for (const row of M) {
+        const tr = document.createElement('tr');
+        for (const cell of row) {
+          const td = document.createElement('td');
+          td.innerHTML = coloredEntry(cell);
+          tr.appendChild(td);
+        }
+        tbl.appendChild(tr);
+      }
+      block.appendChild(tbl);
+    }
+    body.appendChild(block);
+  });
+}
+
+function coloredEntry(cell) {
+  if (!cell || cell.length === 0) return '<span style="color:#555">0</span>';
+  return cell.map((t, i) => {
+    const sign = t.sign === -1 ? '−' : (i === 0 ? '' : '+');
+    return `<span class="mterm" style="color:${varColor(t.idx)}">${sign}x<sub>${t.idx}</sub></span>`;
+  }).join(' ');
 }
 </script>
 </body>
